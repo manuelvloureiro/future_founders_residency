@@ -1,6 +1,6 @@
-# Keith Demo API
+# IDM Demo API
 
-FastAPI backend serving the Keith demo scenario data and approval flow.
+FastAPI backend serving the IDM demo scenario data and approval flow.
 
 ## Running
 

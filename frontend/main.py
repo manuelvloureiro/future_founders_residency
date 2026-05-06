@@ -11,10 +11,15 @@ from components.why_drawer import why_drawer_closed, why_drawer_open
 state = {
     "selected_id": "bbq",
     "approved": False,
+    "actions": {0: "approved", 1: "pending", 2: "escalated"},
     "scenario": None,
     "scenario_lock": asyncio.Lock(),
     "toast": None,
 }
+
+
+def reset_actions():
+    state["actions"] = {0: "approved", 1: "pending", 2: "escalated"}
 
 
 async def get_scenario() -> dict:
@@ -105,7 +110,7 @@ HEAD_STYLES = """
 
 .joey-stage-wrap { position: relative; }
 .joey-stage-real { opacity: 0; animation: joey-stage-in-kf 0.5s ease-out forwards; }
-.joey-stage-thinking { animation: joey-fade-out-kf 0.4s ease-out forwards; pointer-events: none; }
+.joey-stage-thinking { position: absolute; inset: 0; animation: joey-fade-out-kf 0.4s ease-out forwards; pointer-events: none; }
 
 #workflow > .joey-stage-wrap:nth-child(1) > .joey-stage-real { animation-delay: 0s; }
 #workflow > .joey-stage-wrap:nth-child(1) > .joey-stage-thinking { display: none; }
@@ -251,7 +256,7 @@ document.body.addEventListener('htmx:afterSwap', (e) => {
 
 app, rt = fast_app(
     pico=False,
-    title="Keith — Retail Planning Assistant",
+    title="IDM — Retail Planning Assistant",
     hdrs=(
         Script(src="https://cdn.tailwindcss.com"),
         Link(
@@ -335,12 +340,12 @@ async def index(fast: int | None = None):
                     ),
                     cls="flex items-end justify-between mb-6",
                 ),
-                workflow(scenario, state["selected_id"], state["approved"], fast=fast_mode),
+                workflow(scenario, state["selected_id"], state["approved"], fast=fast_mode, actions=state["actions"]),
                 cls="px-8 py-6 max-w-[1400px] mx-auto",
             ),
             why_drawer_closed(),
             toast_node(),
-            cls="ml-60 min-h-screen",
+            cls="ml-52 min-h-screen",
         ),
         cls="bg-slate-50 min-h-screen",
     )
@@ -351,7 +356,18 @@ async def select(insight_id: str):
     scenario = await get_scenario()
     state["selected_id"] = insight_id
     state["approved"] = False
-    return workflow(scenario, state["selected_id"], state["approved"], fast=True)
+    reset_actions()
+    return workflow(scenario, state["selected_id"], state["approved"], fast=True, actions=state["actions"])
+
+
+@rt("/action/{idx}/{decision}", methods=["POST"])
+async def action(idx: int, decision: str):
+    scenario = await get_scenario()
+    if decision in {"approved", "escalated", "rejected", "pending"} and idx in state["actions"]:
+        state["actions"][idx] = decision
+    if all(v == "approved" for v in state["actions"].values()):
+        state["approved"] = True
+    return workflow(scenario, state["selected_id"], state["approved"], fast=True, actions=state["actions"])
 
 
 @rt("/approve", methods=["POST"])
@@ -359,8 +375,11 @@ async def approve():
     scenario = await get_scenario()
     res = await approve_insight(state["selected_id"])
     state["approved"] = True
+    for k in state["actions"]:
+        if state["actions"][k] == "pending":
+            state["actions"][k] = "approved"
     state["toast"] = res["message"]
-    flow = workflow(scenario, state["selected_id"], state["approved"], fast=True)
+    flow = workflow(scenario, state["selected_id"], state["approved"], fast=True, actions=state["actions"])
     return flow, Div(
         Div(
             Div(

@@ -20,11 +20,6 @@ def decisions_counter(decisions_today: int) -> Div:
             ),
             cls="flex items-baseline",
         ),
-        Div(
-            Span("vs", cls="text-[10px] text-slate-400"),
-            Span("1.2/wk human baseline", cls="text-[10px] text-slate-500 font-medium ml-1"),
-            cls="flex items-center gap-0.5 mt-0.5",
-        ),
         cls="px-3 py-1.5 bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-md leading-tight",
     )
 
@@ -35,9 +30,7 @@ def app_topbar(monitoring_label: str, decisions_today: int = 47) -> Div:
             Div(
                 Span("Workspace", cls="text-slate-400"),
                 Span("/", cls="text-slate-300"),
-                Span("Insights", cls="text-slate-400"),
-                Span("/", cls="text-slate-300"),
-                Span("Barbecue weekend", cls="text-slate-900 font-medium"),
+                Span("Insights", cls="text-slate-900 font-medium"),
                 cls="flex items-center gap-2 text-xs",
             ),
             cls="flex items-center",

@@ -6,12 +6,12 @@ from models import (
 
 scenario = Scenario(
     greeting="Good morning, Keith.",
-    subgreeting="3 strategic insights this week.",
-    monitoring_label="Keith · monitoring · updated 2 min ago",
+    subgreeting="3 strategic insights.",
+    monitoring_label="IDM · monitoring · updated 2 min ago",
     insights=[
+        Insight(id="sixnations", icon="🏉", title="Six Nations game", subtitle="Snacks / beer uplift", selected=False, available=True),
         Insight(id="bbq", icon="🔥", title="Barbecue weekend", subtitle="Dublin / Cork divergence", selected=True, available=True),
         Insight(id="heatwave", icon="☀️", title="Heatwave forecast", subtitle="Ice cream category", selected=False, available=False),
-        Insight(id="sixnations", icon="🏉", title="Six Nations Saturday", subtitle="Snacks / beer uplift", selected=False, available=False),
     ],
     bbq=BbqScenario(
         headline="Barbecue weekend Sat–Sun",
@@ -34,7 +34,7 @@ scenario = Scenario(
                 temp_c=13,
                 condition="rain",
                 emoji="🌧️",
-                current_stock_units=1800,
+                current_stock_units=2400,
                 current_price_eur=12.50,
                 recommended_price_eur=11.40,
                 price_delta_pct=-8.8,
@@ -56,11 +56,11 @@ scenario = Scenario(
             from_city="Cork",
             to_city="Dublin",
             units=400,
-            departs="Thu 06:00",
-            arrives="Thu 11:30",
+            departs="Sat 04:00",
+            arrives="Sat 09:30",
         ),
         actions=[
-            "Reallocate 400 BBQ packs Cork → Dublin (truck Thu 06:00)",
+            "Reallocate 400 BBQ packs Cork → Dublin (truck Sat 04:00)",
             "Raise Dublin price €12.50 → €13.20 (+5.6%)",
             "Drop Cork price €12.50 → €11.40 (−8.8%) — early-bird clearance",
         ],

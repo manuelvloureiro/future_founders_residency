@@ -26,7 +26,6 @@ CORK_STORES = [
 
 OTHER_STORES = [
     {"name": "Limerick", "lat": 52.6638, "lon": -8.6267, "stock": 210, "tone": "neutral"},
-    {"name": "Galway", "lat": 53.2707, "lon": -9.0568, "stock": 230, "tone": "neutral"},
     {"name": "Waterford", "lat": 52.2593, "lon": -7.1101, "stock": 180, "tone": "neutral"},
     {"name": "Kilkenny", "lat": 52.6541, "lon": -7.2448, "stock": 160, "tone": "neutral"},
     {"name": "Sligo", "lat": 54.2697, "lon": -8.4694, "stock": 140, "tone": "neutral"},

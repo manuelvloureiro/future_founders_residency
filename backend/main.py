@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from data import scenario
 from models import ApproveRequest, ApproveResponse, Scenario
 
-app = FastAPI(title="Keith Demo API")
+app = FastAPI(title="IDM Demo API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,5 +27,5 @@ def get_scenario():
 @app.post("/api/scenario/approve", response_model=ApproveResponse)
 def approve_scenario(req: ApproveRequest):
     return ApproveResponse(
-        message="Reallocation scheduled · Prices update Wed 00:00"
+        message="Reallocation scheduled · Prices update tonight 00:00"
     )

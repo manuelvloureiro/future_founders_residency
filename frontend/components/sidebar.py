@@ -52,7 +52,7 @@ def sidebar() -> Div:
             Div(
                 NotStr(JOEY_LOGO),
                 Div(
-                    Span("Keith", cls="text-white font-semibold tracking-tight"),
+                    Span("IDM", cls="text-white font-semibold tracking-tight"),
                     Span(
                         "The agentic retailer",
                         cls="text-[11px] text-emerald-400/80 -mt-0.5 block font-medium",
@@ -88,11 +88,11 @@ def sidebar() -> Div:
                 ),
                 Div(
                     Span(
-                        "Category Manager",
+                        "Keith",
                         cls="text-sm text-white font-medium block leading-tight",
                     ),
                     Span(
-                        "Fresh & meat",
+                        "Category Manager · Fresh & meat",
                         cls="text-[11px] text-slate-400 block leading-tight",
                     ),
                 ),
@@ -100,5 +100,5 @@ def sidebar() -> Div:
             ),
             cls="border-t border-white/5 px-4 py-3",
         ),
-        cls="fixed left-0 top-0 bottom-0 w-60 bg-slate-950 flex flex-col z-30",
+        cls="fixed left-0 top-0 bottom-0 w-52 bg-slate-950 flex flex-col z-30",
     )

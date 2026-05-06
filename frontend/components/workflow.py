@@ -25,7 +25,7 @@ def thinking_overlay(message: str) -> Div:
                 ),
                 Div(
                     Span(
-                        "Keith is thinking",
+                        "IDM is thinking",
                         cls="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold block",
                     ),
                     Span(
@@ -68,7 +68,7 @@ def unavailable_stage(insight: dict) -> Div:
                     cls="text-slate-500 text-sm mt-3",
                 ),
                 P(
-                    "Keith is still gathering signals for this insight. Check back when it moves to Pending review.",
+                    "IDM is still gathering signals for this insight. Check back when it moves to Pending review.",
                     cls="text-slate-400 text-xs mt-1",
                 ),
                 cls="text-center py-8",
@@ -78,7 +78,13 @@ def unavailable_stage(insight: dict) -> Div:
     )
 
 
-def workflow(scenario: dict, selected_id: str, approved: bool, fast: bool = False) -> Div:
+def workflow(
+    scenario: dict,
+    selected_id: str,
+    approved: bool,
+    fast: bool = False,
+    actions: dict | None = None,
+) -> Div:
     insight = next(
         (i for i in scenario["insights"] if i["id"] == selected_id),
         scenario["insights"][0],
@@ -90,18 +96,19 @@ def workflow(scenario: dict, selected_id: str, approved: bool, fast: bool = Fals
 
     if insight["id"] == "bbq":
         bbq = scenario["bbq"]
+        action_states = actions or {0: "pending", 1: "pending", 2: "pending"}
         stages = [
             stage_wrap(signal_strip(scenario, selected_id), None),
             stage_wrap(
                 situation_panel(bbq),
-                "Reading weather + POS + inventory feeds…",
+                "Reading weather, sales, and inventory feeds…",
             ),
             stage_wrap(
-                recommendation_panel(bbq),
+                recommendation_panel(bbq, action_states=action_states),
                 "Simulating reallocation + price changes against guardrails…",
             ),
             stage_wrap(
-                decision_bar(approved),
+                decision_bar(approved, action_states=action_states, bbq=bbq),
                 "Preparing plan for your review…",
             ),
         ]

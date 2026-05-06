@@ -142,7 +142,7 @@ def why_drawer_open(bullets: list[dict], expanded_idx: int | None = None) -> Div
                             cls="text-[10px] uppercase tracking-wider text-emerald-600 font-semibold",
                         ),
                         H3(
-                            "Why Keith recommends this plan",
+                            "Why IDM recommends this plan",
                             cls="text-lg font-semibold text-slate-900 mt-1",
                         ),
                         Span(

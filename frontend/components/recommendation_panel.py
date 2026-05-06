@@ -12,73 +12,141 @@ ARROW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 TRUCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1"/><path d="M15 9h4l3 4v4h-7z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>'
 TAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 0 0-2-2h-7l-9 9 7 7 9-9z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>'
 TAGDOWN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 0 0-2-2h-7l-9 9 7 7 9-9z"/><path d="M7.5 7.5l0 0"/><path d="M11 14l4 0M13 12l0 4"/></svg>'
+ESCALATE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></svg>'
+X_ICON_SM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+RESET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>'
 
 
-def action_row(idx: int, icon: str, text: str, badge: str, badge_tone: str) -> Div:
+def _action_decision_btn(
+    idx: int,
+    decision: str,
+    label: str,
+    icon: str,
+    state: str,
+) -> Button:
+    base = "inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded border transition-colors"
+    tone = {
+        "approved": (
+            "bg-emerald-600 text-white border-emerald-600",
+            "bg-white text-slate-600 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700",
+        ),
+        "escalated": (
+            "bg-amber-500 text-white border-amber-500",
+            "bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700",
+        ),
+        "rejected": (
+            "bg-rose-600 text-white border-rose-600",
+            "bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700",
+        ),
+        "pending": (
+            None,
+            "bg-white text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700",
+        ),
+    }[decision]
+    is_active = decision != "pending" and state == decision
+    cls = f"{base} {tone[0] if is_active else tone[1]}"
+    return Button(
+        Div(NotStr(icon), cls="w-3 h-3"),
+        Span(label),
+        cls=cls,
+        hx_post=f"/action/{idx}/{decision}",
+        hx_target="#workflow",
+        hx_swap="outerHTML",
+    )
+
+
+def action_row(
+    idx: int,
+    icon: str,
+    text: str,
+    badge: str,
+    badge_tone: str,
+    decision: str = "pending",
+) -> Div:
     tone_map = {
         "emerald": "bg-emerald-50 text-emerald-700",
         "amber": "bg-amber-50 text-amber-700",
         "sky": "bg-sky-50 text-sky-700",
     }
+    state_border = {
+        "pending": "border-transparent hover:border-slate-200",
+        "approved": "border-emerald-200 bg-emerald-50/40",
+        "escalated": "border-amber-200 bg-amber-50/40",
+        "rejected": "border-rose-200 bg-rose-50/40 opacity-70",
+    }[decision]
+    return Div(
+        Div(
+            Div(
+                Span(
+                    str(idx),
+                    cls="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] font-semibold flex items-center justify-center shrink-0",
+                ),
+                Div(NotStr(icon), cls="w-4 h-4 text-slate-500 shrink-0"),
+                cls="flex items-center gap-2 shrink-0",
+            ),
+            Span(text, cls="text-sm text-slate-700 flex-1"),
+            Span(
+                badge,
+                cls=f"text-[10px] font-semibold px-2 py-0.5 rounded {tone_map[badge_tone]} shrink-0",
+            ),
+            cls="flex items-center gap-3",
+        ),
+        Div(
+            _action_decision_btn(idx - 1, "approved", "Approve", CHECK_ICON, decision),
+            _action_decision_btn(idx - 1, "escalated", "Escalate", ESCALATE_ICON, decision),
+            _action_decision_btn(idx - 1, "rejected", "Reject", X_ICON_SM, decision),
+            _action_decision_btn(idx - 1, "pending", "Reset", RESET_ICON, decision),
+            cls="flex items-center gap-1.5 mt-2 ml-7",
+        ),
+        cls=f"flex flex-col px-3 py-2.5 bg-slate-50 hover:bg-white border rounded-lg transition-colors {state_border}",
+    )
+
+
+def projected_impact_strip(impact: dict, confidence: int = 87) -> Div:
     return Div(
         Div(
             Span(
-                str(idx),
-                cls="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] font-semibold flex items-center justify-center shrink-0",
+                "Projected impact",
+                cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold",
             ),
-            Div(NotStr(icon), cls="w-4 h-4 text-slate-500 shrink-0"),
-            cls="flex items-center gap-2 shrink-0",
+            Span(
+                f"{confidence}% conf.",
+                cls="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5",
+            ),
+            cls="flex items-center justify-between mb-2",
         ),
-        Span(text, cls="text-sm text-slate-700 flex-1"),
-        Span(
-            badge,
-            cls=f"text-[10px] font-semibold px-2 py-0.5 rounded {tone_map[badge_tone]} shrink-0",
-        ),
-        cls="flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-colors",
-    )
-
-
-def impact_metric(value: str, label: str, sublabel: str, tone: str) -> Div:
-    tone_map = {
-        "emerald": "text-emerald-600",
-        "rose": "text-rose-600",
-        "sky": "text-sky-600",
-    }
-    return Div(
-        Span(value, cls=f"text-2xl font-bold {tone_map[tone]} block"),
-        Span(label, cls="text-xs text-slate-500 block mt-0.5"),
-        Span(sublabel, cls="text-[10px] text-slate-400 block"),
-        cls="flex flex-col",
-    )
-
-
-def confidence_ring(pct: int) -> Div:
-    radius = 26
-    circumference = 2 * 3.14159 * radius
-    offset = circumference * (1 - pct / 100)
-    svg = f"""
-    <svg viewBox="0 0 64 64" class="w-16 h-16 -rotate-90">
-      <circle cx="32" cy="32" r="{radius}" stroke="#e2e8f0" stroke-width="5" fill="none"/>
-      <circle cx="32" cy="32" r="{radius}" stroke="#10b981" stroke-width="5" fill="none"
-              stroke-linecap="round"
-              stroke-dasharray="{circumference}"
-              stroke-dashoffset="{offset}"/>
-    </svg>
-    """
-    return Div(
-        Div(NotStr(svg)),
         Div(
-            Span(f"{pct}%", cls="text-sm font-bold text-slate-900 block leading-none"),
-            Span("conf.", cls="text-[9px] text-slate-400 leading-none"),
-            cls="absolute inset-0 flex flex-col items-center justify-center",
+            Div(
+                Span(f"+€{impact['margin_eur']:,}", cls="text-lg font-bold text-emerald-600 block leading-tight"),
+                Span("Margin uplift", cls="text-[10px] text-slate-500 block"),
+                cls="flex flex-col",
+            ),
+            Div(cls="w-px bg-emerald-200/60 self-stretch mx-3"),
+            Div(
+                Span(f"{impact['waste_kg']} kg", cls="text-lg font-bold text-emerald-600 block leading-tight"),
+                Span("Waste avoided", cls="text-[10px] text-slate-500 block"),
+                cls="flex flex-col",
+            ),
+            Div(cls="w-px bg-emerald-200/60 self-stretch mx-3"),
+            Div(
+                Span(f"+{impact['sell_through_pct']}%", cls="text-lg font-bold text-sky-600 block leading-tight"),
+                Span("Sell-through", cls="text-[10px] text-slate-500 block"),
+                cls="flex flex-col",
+            ),
+            cls="flex items-center",
         ),
-        cls="relative w-16 h-16",
+        cls="bg-gradient-to-br from-emerald-50/60 to-white border border-emerald-100 rounded-lg px-3 py-2",
     )
 
 
-def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> Div:
+def recommendation_panel(
+    bbq: dict,
+    on_show_why_target: str = "#why-drawer",
+    action_states: dict | None = None,
+) -> Div:
     impact = bbq["impact"]
     realloc = bbq["reallocation"]
+    action_states = action_states or {0: "pending", 1: "pending", 2: "pending"}
 
     actions_meta = [
         (TRUCK_ICON, bbq["actions"][0], f"{realloc['units']} units", "sky"),
@@ -116,7 +184,7 @@ def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> 
         stage_header(
             "03",
             "Recommendation",
-            "Keith's proposed plan",
+            "IDM's proposed plan",
             status="3 actions",
             status_tone="sky",
         ),
@@ -131,7 +199,10 @@ def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> 
                     cls="mb-2",
                 ),
                 Div(
-                    *[action_row(i + 1, ico, txt, bd, tone) for i, (ico, txt, bd, tone) in enumerate(actions_meta)],
+                    *[
+                        action_row(i + 1, ico, txt, bd, tone, decision=action_states.get(i, "pending"))
+                        for i, (ico, txt, bd, tone) in enumerate(actions_meta)
+                    ],
                     cls="space-y-2",
                 ),
                 Div(
@@ -168,38 +239,6 @@ def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> 
             ),
             Div(
                 Div(
-                    Div(
-                        Span(
-                            "Projected impact",
-                            cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold",
-                        ),
-                        confidence_ring(87),
-                        cls="flex items-start justify-between mb-3",
-                    ),
-                    Div(
-                        impact_metric(
-                            f"+€{impact['margin_eur']:,}",
-                            "Margin uplift",
-                            "vs do-nothing",
-                            "emerald",
-                        ),
-                        impact_metric(
-                            f"{impact['waste_kg']} kg",
-                            "Waste avoided",
-                            "Cork meat",
-                            "emerald",
-                        ),
-                        impact_metric(
-                            f"+{impact['sell_through_pct']}%",
-                            "Sell-through",
-                            "Dublin",
-                            "sky",
-                        ),
-                        cls="grid grid-cols-3 gap-3 pt-3 border-t border-slate-100",
-                    ),
-                    cls="bg-gradient-to-br from-emerald-50/50 to-white border border-emerald-100 rounded-lg p-4",
-                ),
-                Div(
                     Span("Logistics window", cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block"),
                     Div(
                         Span("🚚", cls="text-lg"),
@@ -215,7 +254,7 @@ def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> 
                         Span(f"Arrives {realloc['arrives']}", cls="text-xs text-slate-500"),
                         cls="flex items-center mt-1",
                     ),
-                    cls="bg-slate-50 border border-slate-100 rounded-lg p-3 mt-3",
+                    cls="bg-slate-50 border border-slate-100 rounded-lg p-3",
                 ),
                 Button(
                     Span("Show me why", cls="mr-1.5"),
@@ -226,7 +265,7 @@ def recommendation_panel(bbq: dict, on_show_why_target: str = "#why-drawer") -> 
                     hx_swap="outerHTML",
                 ),
             ),
-            cls="flex flex-col gap-6",
+            cls="flex flex-col gap-3",
             ),
             map_column,
             cls="grid grid-cols-1 lg:grid-cols-2 gap-6",

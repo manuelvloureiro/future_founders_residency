@@ -10,23 +10,23 @@ CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 def why_now_timeline() -> Div:
     steps = [
         {
-            "label": "Mon",
+            "label": "Wed",
             "title": "First signal",
-            "detail": "Met Éireann run flagged Sat divergence",
+            "detail": "Met Éireann run flagged Sat–Sun divergence",
             "conf": 62,
             "state": "past",
         },
         {
-            "label": "Tue",
+            "label": "Thu",
             "title": "Confidence rising",
-            "detail": "POS + 2 forecast runs corroborate",
+            "detail": "Sales data and 2 forecast runs corroborate",
             "conf": 73,
             "state": "past",
         },
         {
-            "label": "Wed",
-            "title": "Threshold crossed",
-            "detail": "87% confidence · action window opens",
+            "label": "Fri",
+            "title": "Demand uptick — trigger",
+            "detail": "Dublin barbecue-pack basket-adds +9% vs 4-week Friday morning baseline; Cork flat",
             "conf": 87,
             "state": "active",
         },
@@ -37,16 +37,16 @@ def why_now_timeline() -> Div:
         is_active = s["state"] == "active"
         if is_active:
             dot_cls = "w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-200 joey-pulse"
-            label_cls = "text-[10px] font-semibold uppercase tracking-wider text-emerald-700 block"
-            title_cls = "text-xs font-semibold text-slate-900 mt-0.5 block"
-            detail_cls = "text-[11px] text-slate-600 leading-tight mt-0.5 block"
-            conf_cls = "text-[10px] font-bold text-emerald-700 mt-1 block"
+            label_cls = "text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block"
+            title_cls = "text-sm font-semibold text-slate-900 mt-0.5 block"
+            detail_cls = "text-xs text-slate-600 leading-tight mt-0.5 block"
+            conf_cls = "text-[11px] font-bold text-emerald-700 mt-1 block"
         else:
             dot_cls = "w-2.5 h-2.5 rounded-full bg-slate-300 ring-2 ring-slate-100"
-            label_cls = "text-[10px] font-semibold uppercase tracking-wider text-slate-400 block"
-            title_cls = "text-xs font-medium text-slate-600 mt-0.5 block"
-            detail_cls = "text-[11px] text-slate-500 leading-tight mt-0.5 block"
-            conf_cls = "text-[10px] font-semibold text-slate-400 mt-1 block"
+            label_cls = "text-[11px] font-semibold uppercase tracking-wider text-slate-400 block"
+            title_cls = "text-sm font-medium text-slate-600 mt-0.5 block"
+            detail_cls = "text-xs text-slate-500 leading-tight mt-0.5 block"
+            conf_cls = "text-[11px] font-semibold text-slate-400 mt-1 block"
 
         children = [
             Div(
@@ -77,7 +77,7 @@ def why_now_timeline() -> Div:
                 cls="text-[10px] uppercase tracking-wider text-slate-500 font-semibold ml-1.5",
             ),
             Span(
-                "Continuous monitoring · 3-day buildup",
+                "Friday AM · day before BBQ weekend",
                 cls="text-[10px] text-slate-400 ml-auto",
             ),
             cls="flex items-center mb-3",
@@ -90,17 +90,42 @@ def why_now_timeline() -> Div:
     )
 
 
-def metric_chip(label: str, value: str, tone: str = "slate") -> Div:
-    tone_map = {
+def metric_chip(
+    label: str,
+    value: str,
+    tone: str = "slate",
+    sublabel: str | None = None,
+    value_size: str = "text-sm",
+) -> Div:
+    value_tone_map = {
         "slate": "text-slate-700",
+        "rose": "text-rose-600",
+        "emerald": "text-emerald-600",
+        "amber": "text-amber-700",
+    }
+    container_tone_map = {
+        "slate": "bg-slate-50 border-slate-100",
+        "rose": "bg-rose-50 border-rose-200",
+        "emerald": "bg-emerald-50 border-emerald-200",
+        "amber": "bg-amber-50 border-amber-200",
+    }
+    sub_tone_map = {
+        "slate": "text-slate-400",
         "rose": "text-rose-600",
         "emerald": "text-emerald-600",
         "amber": "text-amber-600",
     }
-    return Div(
+    children = [
         Span(label, cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block"),
-        Span(value, cls=f"text-sm font-semibold {tone_map.get(tone, tone_map['slate'])} block mt-0.5"),
-        cls="px-3 py-2 bg-slate-50 rounded-lg border border-slate-100",
+        Span(value, cls=f"{value_size} font-semibold {value_tone_map.get(tone, value_tone_map['slate'])} block mt-0.5"),
+    ]
+    if sublabel:
+        children.append(
+            Span(sublabel, cls=f"text-[10px] {sub_tone_map.get(tone, sub_tone_map['slate'])} font-medium block mt-0.5")
+        )
+    return Div(
+        *children,
+        cls=f"px-3 py-2 rounded-lg border {container_tone_map.get(tone, container_tone_map['slate'])}",
     )
 
 
@@ -125,13 +150,25 @@ def situation_panel(bbq: dict) -> Div:
                         cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold",
                     ),
                     Div(
-                        Span(f"{dublin['temp_c']}°C", cls="text-3xl font-bold text-slate-900"),
-                        Span(dublin["emoji"], cls="text-2xl mx-1"),
-                        Span("Dublin", cls="text-sm text-slate-500 font-medium ml-1"),
-                        Span("vs", cls="text-xs text-slate-400 mx-3"),
-                        Span(f"{cork['temp_c']}°C", cls="text-3xl font-bold text-slate-900"),
-                        Span(cork["emoji"], cls="text-2xl mx-1"),
-                        Span("Cork", cls="text-sm text-slate-500 font-medium ml-1"),
+                        Div(
+                            Div(
+                                Span(f"{dublin['temp_c']}°C", cls="text-3xl font-bold text-slate-900"),
+                                Span(dublin["emoji"], cls="text-2xl ml-1"),
+                                cls="flex items-center justify-center",
+                            ),
+                            Span("Dublin", cls="text-sm text-slate-500 font-medium block text-center mt-0.5"),
+                            cls="flex flex-col items-center",
+                        ),
+                        Span("vs", cls="text-xs text-slate-400 mx-4 self-center"),
+                        Div(
+                            Div(
+                                Span(f"{cork['temp_c']}°C", cls="text-3xl font-bold text-slate-900"),
+                                Span(cork["emoji"], cls="text-2xl ml-1"),
+                                cls="flex items-center justify-center",
+                            ),
+                            Span("Cork", cls="text-sm text-slate-500 font-medium block text-center mt-0.5"),
+                            cls="flex flex-col items-center",
+                        ),
                         cls="flex items-center mt-1",
                     ),
                     Span(
@@ -141,10 +178,18 @@ def situation_panel(bbq: dict) -> Div:
                     cls="mb-4",
                 ),
                 Div(
-                    metric_chip("Dublin stock", f"{dublin['current_stock_units']:,} u"),
-                    metric_chip("Cork stock", f"{cork['current_stock_units']:,} u"),
-                    metric_chip("Cover (Dub)", "1.5 d", tone="rose"),
-                    metric_chip("Cover (Cor)", "14 d", tone="emerald"),
+                    metric_chip(
+                        "Dublin stock",
+                        f"{dublin['current_stock_units']:,} u",
+                        tone="amber",
+                        sublabel="1.5 d cover · stocks out Sat 15:00",
+                    ),
+                    metric_chip(
+                        "Cork stock",
+                        f"{cork['current_stock_units']:,} u",
+                        tone="rose",
+                        sublabel="14 d cover · ~180 kg waste risk",
+                    ),
                     cls="grid grid-cols-2 gap-2 mb-4",
                 ),
                 why_now_timeline(),

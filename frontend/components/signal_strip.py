@@ -5,17 +5,17 @@ from .stage import stage_card, stage_header
 
 INSIGHT_DETAIL = {
     "bbq": {
-        "summary": "Diverging weekend weather is splitting BBQ demand across the country. Keith proposes shifting stock from rain-hit Cork to sunny Dublin and adjusting prices to clear inventory before spoilage.",
+        "summary": "Diverging weekend weather is splitting BBQ demand across the country. IDM proposes shifting stock from rain-hit Cork to sunny Dublin and adjusting prices to clear inventory before spoilage.",
         "tags": ["Weather signal", "Fresh meat", "2 cities", "48h window"],
         "sources": {"weather": True, "social": False, "pos": True, "inventory": True, "events": False},
     },
     "heatwave": {
-        "summary": "A 4-day heatwave is forecast nationwide. Keith is monitoring ice cream and frozen-dessert sell-through across all 142 stores to pre-position inventory.",
+        "summary": "A 4-day heatwave is forecast nationwide. IDM is monitoring ice cream and frozen-dessert sell-through across all 142 stores to pre-position inventory.",
         "tags": ["Weather signal", "Frozen", "Nationwide", "96h window"],
         "sources": {"weather": True, "social": False, "pos": True, "inventory": False, "events": False},
     },
     "sixnations": {
-        "summary": "Ireland plays at home Saturday. Historical data shows snacks and beer uplift of ~30% in catchment areas around the stadium and major pubs.",
+        "summary": "Ireland plays at home this weekend. Historical data shows snacks and beer uplift of ~30% in catchment areas around the stadium and major pubs.",
         "tags": ["Event signal", "Snacks & beer", "Catchment areas", "72h window"],
         "sources": {"weather": False, "social": True, "pos": False, "inventory": False, "events": True},
     },
@@ -24,7 +24,7 @@ INSIGHT_DETAIL = {
 SOURCE_META = [
     ("weather", "🌤", "Weather"),
     ("social", "💬", "Social"),
-    ("pos", "🧾", "POS"),
+    ("pos", "🧾", "Sales"),
     ("inventory", "📦", "Stock"),
     ("events", "🎟", "Events"),
 ]
@@ -158,7 +158,7 @@ def signal_strip(scenario: dict, selected_id: str) -> Div:
         stage_header(
             "01",
             "Signal",
-            "What Keith is monitoring this week",
+            "What IDM is noticing",
             status=f"{len(scenario['insights'])} active",
             status_tone="emerald",
         ),
