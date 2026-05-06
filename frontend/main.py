@@ -183,6 +183,16 @@ body {
 .keith-label .keith-label-name { font-size: 14px; font-weight: 700; }
 .keith-label .keith-label-emoji { margin: 0 5px; }
 .keith-label .keith-label-price { color: #475569; font-weight: 500; }
+.keith-label .keith-label-arrow {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.keith-label .keith-label-arrow-up { color: #047857; background: #d1fae5; }
+.keith-label .keith-label-arrow-down { color: #b91c1c; background: #fee2e2; }
 
 .keith-arrow-label {
   background: #0f172a;
@@ -311,21 +321,6 @@ async def index(fast: int | None = None):
                         ),
                     ),
                     Div(
-                        Div(
-                            Span(
-                                "View",
-                                cls="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mr-2",
-                            ),
-                            Span(
-                                "Without Keith",
-                                cls="px-3 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 cursor-pointer rounded",
-                            ),
-                            Span(
-                                "With Keith",
-                                cls="px-3 py-1 text-xs font-semibold text-white bg-slate-900 rounded shadow-sm",
-                            ),
-                            cls="flex items-center gap-1 px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg",
-                        ),
                         Div(
                             Span(
                                 cls="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block joey-pulse"

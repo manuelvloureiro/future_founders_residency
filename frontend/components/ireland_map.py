@@ -40,8 +40,24 @@ def ireland_map(cities: dict) -> Div:
     dublin = cities["dublin"]
     cork = cities["cork"]
 
-    dub_price = f"€{dublin['current_price_eur']:.2f} → €{dublin['recommended_price_eur']:.2f}"
-    cor_price = f"€{cork['current_price_eur']:.2f} → €{cork['recommended_price_eur']:.2f}"
+    def fmt_delta(city: dict) -> tuple[str, str, str]:
+        delta = city["price_delta_pct"]
+        if delta >= 0:
+            arrow = "▲"
+            tone = "up"
+            sign = "+"
+        else:
+            arrow = "▼"
+            tone = "down"
+            sign = "−"
+        body = (
+            f"€{city['current_price_eur']:.2f} → €{city['recommended_price_eur']:.2f} "
+            f"({sign}{abs(delta):.1f}%)"
+        )
+        return arrow, tone, body
+
+    dub_arrow, dub_tone, dub_price = fmt_delta(dublin)
+    cor_arrow, cor_tone, cor_price = fmt_delta(cork)
 
     map_id = f"keith-map-{secrets.token_hex(4)}"
 
@@ -115,14 +131,14 @@ def ireland_map(cities: dict) -> Div:
 
     var dublinLabel = L.divIcon({{
       className: '',
-      html: '<div class="keith-label"><span class="keith-label-name">{dublin['name']}</span><span class="keith-label-emoji">{dublin['emoji']}</span><span class="keith-label-price">{dub_price}</span></div>',
-      iconSize: [180, 26],
-      iconAnchor: [-12, 13],
+      html: '<div class="keith-label"><span class="keith-label-name">{dublin['name']}</span><span class="keith-label-emoji">{dublin['emoji']}</span><span class="keith-label-price">{dub_price}</span><span class="keith-label-arrow keith-label-arrow-{dub_tone}">{dub_arrow}</span></div>',
+      iconSize: [240, 28],
+      iconAnchor: [252, 13],
     }});
     var corkLabel = L.divIcon({{
       className: '',
-      html: '<div class="keith-label"><span class="keith-label-name">{cork['name']}</span><span class="keith-label-emoji">{cork['emoji']}</span><span class="keith-label-price">{cor_price}</span></div>',
-      iconSize: [180, 26],
+      html: '<div class="keith-label"><span class="keith-label-name">{cork['name']}</span><span class="keith-label-emoji">{cork['emoji']}</span><span class="keith-label-price">{cor_price}</span><span class="keith-label-arrow keith-label-arrow-{cor_tone}">{cor_arrow}</span></div>',
+      iconSize: [240, 28],
       iconAnchor: [-12, 13],
     }});
     L.marker(dublin, {{icon: dublinLabel, interactive: false}}).addTo(map);
