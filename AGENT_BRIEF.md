@@ -4,13 +4,17 @@ You are building a visual demo with a Python backend and TypeScript frontend. Fo
 
 ## What you're building
 
-A **Python (FastAPI) backend** that serves mock scenario data via REST API, and a **Next.js TypeScript frontend** at `/` that demonstrates "Joey," an agentic retail planning assistant. One screen, three zones:
+**Tagline:** Agentic Dynamic Pricing for Retailers. Joey is the *agent of the retailer* — it controls the **now**: pricing, allocation, and promotions reacting per-store, per-hour, against weather, sales velocity, inventory, and social signal.
 
-1. **Top bar** — greeting + 3 insight pills (one selected)
+**Pitch role:** the demo is sliced **between slides** during the pitch (see `PITCH.md`). It needs to read instantly and dramatise the core claim: a category manager opens Joey and finds a *decision already drafted*, not a dashboard to interpret.
+
+A **Python (FastAPI) backend** that serves mock scenario data via REST API, and a **Next.js TypeScript frontend** at `/` that demonstrates Joey. One screen, three zones:
+
+1. **Top bar** — greeting + 3 insight pills (one selected) + tagline strip
 2. **Recommendation card** — 3-column layout: situation (left), Ireland map (center), actions (right)
 3. **Why drawer** — slides up from the bottom when "Show me why" is clicked
 
-The user is a grocery category manager. Joey has detected a barbecue weekend with diverging weather between Dublin and Cork.
+The user is a grocery category manager. Joey has detected a barbecue weekend with diverging weather between Dublin and Cork. The *failure mode without Joey* is concrete and must come through in the copy: Dublin stocks out Saturday afternoon, Cork bins ~180 kg of meat. The manager could not have caught both in time manually.
 
 ---
 
@@ -93,8 +97,8 @@ from models import (
 
 scenario = Scenario(
     greeting="Good morning, Aoife.",
-    subgreeting="3 strategic insights this week.",
-    monitoring_label="Joey · monitoring · updated 2 min ago",
+    subgreeting="3 decisions drafted overnight. 1 needs you now.",
+    monitoring_label="Joey · agentic dynamic pricing · live · updated 2 min ago",
 
     insights=[
         Insight(id="bbq", icon="🔥", title="Barbecue weekend", subtitle="Dublin / Cork divergence", selected=True, available=True),
@@ -104,7 +108,7 @@ scenario = Scenario(
 
     bbq=BbqScenario(
         headline="Barbecue weekend Sat–Sun",
-        summary="Dublin will be hot and dry while Cork sees rain. Without action, Dublin stocks out Saturday afternoon and Cork throws away ~180 kg of meat.",
+        summary="Dublin will be hot and dry while Cork sees rain. Without action: Dublin stocks out Saturday afternoon, Cork bins ~180 kg of meat. Joey has drafted the reallocation and price changes — approve to commit.",
 
         cities={
             "dublin": CityState(
@@ -456,7 +460,8 @@ export interface Scenario {
 - Props: `insights: Insight[]`, `selectedId: string`, `onSelect: (id: string) => void`, `greeting: string`, `subgreeting: string`, `monitoringLabel: string`
 - Greeting (large) + subgreeting (medium) on the left
 - Monitoring label (small, with a tiny green pulsing dot) on the right
-- Row of 3 pills below; selected pill has filled green background, others have white background with border
+- Below greeting/right-rail row: a thin tagline strip rendering the literal text **"Agentic Dynamic Pricing for Retailers"** (uppercase, tracked, `text-xs text-neutral-500`). This anchors the demo for viewers walking into the screen mid-pitch.
+- Row of 3 pills below the tagline strip; selected pill has filled green background, others have white background with border
 - Clicking a pill calls `onSelect`
 
 ### `frontend/lib/api.ts`
@@ -516,7 +521,7 @@ export interface Scenario {
 ### Frontend
 6. `npm run dev` starts with no errors on port 3000
 7. `npx tsc --noEmit` passes with no errors
-8. Page at `/` loads data from the backend and shows: greeting, 3 pills (BBQ selected), recommendation card with 3 columns, no console errors
+8. Page at `/` loads data from the backend and shows: greeting, "Agentic Dynamic Pricing for Retailers" tagline strip, 3 pills (BBQ selected), recommendation card with 3 columns, no console errors
 9. Map renders Ireland-ish outline with 2 pulsing pins (Dublin green, Cork amber), weather emojis, price chips, animated arrow Cork→Dublin with "+400 units" label
 10. Forecast strip shows Fri/Sat/Sun for both cities
 11. Clicking heatwave or Six Nations pill swaps the card to "Preview unavailable"

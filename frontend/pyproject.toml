@@ -1,0 +1,11 @@
+[project]
+name = "joey-frontend"
+version = "0.1.0"
+description = "Keith demo frontend (Python / FastHTML)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-fasthtml>=0.12.0",
+    "httpx>=0.27.0",
+    "uvicorn>=0.30.0",
+]

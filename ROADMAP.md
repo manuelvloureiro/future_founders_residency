@@ -1,8 +1,12 @@
 # Joey Demo — Implementation Roadmap
 
-**Goal:** ship a visual demo of "Joey," an agentic retail planning assistant. Python backend serves the data via API; TypeScript frontend renders the UI. Work is split into independent units that multiple agents execute in parallel.
+**Tagline:** Agentic Dynamic Pricing for Retailers.
+
+**Goal:** ship a visual demo of "Joey" (the *agent of the retailer*) plus a pitch deck that slices the demo between slides. Python backend serves the data via API; TypeScript frontend renders the UI. Work is split into independent units that multiple agents execute in parallel.
 
 **Scenario:** A grocery category manager opens Joey on Monday. Joey has detected that next weekend is a barbecue weekend, with diverging weather between Dublin (24°C sunny) and Cork (13°C rainy). Joey recommends reallocating 400 BBQ packs Cork → Dublin and adjusting prices in both cities. The manager can approve, modify, reject, or drill into "show me why" to see the reasoning trace.
+
+**Pitch context:** the demo is sliced **between slides** during the pitch — short live moments that prove each claim, not one big reveal. Pitch arc: problem → background → why now → solution (demo slice) → how it works (demo slice) → business model → market → team → vision → ask. See `PITCH.md` for the full storyboard.
 
 ---
 
@@ -161,6 +165,22 @@ These units have zero cross-dependencies and can all run simultaneously.
 
 ---
 
+### `pitch-deck` — Pitch storyboard slides
+**Slug:** `pitch-deck`
+**Deps:** none
+**Files:** `pitch/` (new directory) — one slide per markdown file or a single `slides.md`; presentation tool TBD (Keynote / Pitch / Tome / plain HTML — agent picks lightest viable)
+
+- [ ] Read `PITCH.md` end-to-end before building anything — that's the canonical content
+- [ ] One slide per section: Problem, Insight, Why now, Solution (demo slot), How it works (demo slot), Business model, Market, Team, Vision, Ask
+- [ ] Picture-led, story-style — minimise bullet text on slides; speaker notes carry the talking points from `PITCH.md`
+- [ ] Mark the two demo-slot slides clearly so the presenter knows to switch to the live Joey demo
+- [ ] Lock the tagline **"Agentic Dynamic Pricing for Retailers"** on the title slide and footer
+- [ ] Flag any unresolved items from `PITCH.md` § "Open questions" inline as TODO speaker notes (don't fabricate the Ocado £105M number — leave it as TODO until verified)
+
+**Done when:** deck is rehearsable end-to-end; demo slots are explicit; speaker notes mirror `PITCH.md`.
+
+---
+
 ## Wave 2 — Composite components (parallel, after Wave 1 deps merge)
 
 These units compose Wave 1 leaf components. Each depends on specific Wave 1 units.
@@ -292,7 +312,8 @@ Wave 1 (all parallel, no deps):
   leaf-ireland-map ──────────────┤
   leaf-forecast-strip ───────────┤
   leaf-charts ───────────────────┤
-  leaf-stat-block ───────────────┘
+  leaf-stat-block ───────────────┤
+  pitch-deck ────────────────────┘  (independent — pitch storyboard, no code deps)
                                  │
 Wave 2 (parallel, partial deps): │
   column-situation ──────(needs frontend-setup + leaf-forecast-strip)
@@ -312,4 +333,4 @@ Wave 5 (sequential):             │
 
 **Critical path:** `frontend-setup` → `column-situation` → `card-recommendation` → `integration` → `polish`
 
-**Max parallelism:** 6 agents in Wave 1, 4 in Wave 2, then sequential convergence.
+**Max parallelism:** 7 agents in Wave 1 (6 code + 1 pitch deck), 4 in Wave 2, then sequential convergence.
