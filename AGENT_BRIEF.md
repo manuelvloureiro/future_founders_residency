@@ -1,10 +1,10 @@
 # Joey Demo — Agent Build Brief
 
-You are building a single-page visual demo. Follow this brief exactly. Do not invent features, data, or copy beyond what's specified here.
+You are building a visual demo with a Python backend and TypeScript frontend. Follow this brief exactly. Do not invent features, data, or copy beyond what's specified here.
 
 ## What you're building
 
-A Next.js page at `/` that demonstrates "Joey," an agentic retail planning assistant. One screen, three zones:
+A **Python (FastAPI) backend** that serves mock scenario data via REST API, and a **Next.js TypeScript frontend** at `/` that demonstrates "Joey," an agentic retail planning assistant. One screen, three zones:
 
 1. **Top bar** — greeting + 3 insight pills (one selected)
 2. **Recommendation card** — 3-column layout: situation (left), Ireland map (center), actions (right)
@@ -16,181 +16,293 @@ The user is a grocery category manager. Joey has detected a barbecue weekend wit
 
 ## Stack (do not deviate)
 
+### Backend (`backend/`)
+- Python 3.11+, FastAPI, Uvicorn
+- Pydantic models for request/response schemas
+- CORS middleware allowing `http://localhost:3000`
+- **No** database, **no** ORM, **no** auth, **no** external APIs
+
+### Frontend (`frontend/`)
 - Next.js 15 App Router, TypeScript, Tailwind v4
 - Framer Motion for animations
-- **No** chart library, **no** map library, **no** backend, **no** API routes, **no** auth, **no** routing beyond `/`
+- **No** chart library, **no** map library, **no** routing beyond `/`
+- All data fetched from the Python backend at `http://localhost:8000`
 
 ---
 
 ## File layout
 
+### Backend
 ```
-app/
-  page.tsx
-  layout.tsx
-  globals.css
-components/
-  TopBar.tsx
-  RecommendationCard.tsx
-  Situation.tsx
-  IrelandMap.tsx
-  Actions.tsx
-  WhyDrawer.tsx
-  ForecastStrip.tsx
-  MiniBarChart.tsx
-  MiniLineChart.tsx
-  StatBlock.tsx
-data/
-  scenario.ts
-  types.ts
+backend/
+  main.py            # FastAPI app, CORS, route definitions
+  models.py          # Pydantic models (Insight, CityState, etc.)
+  data.py            # Mock scenario data
+  requirements.txt   # fastapi, uvicorn, pydantic
+```
+
+### Frontend
+```
+frontend/
+  app/
+    page.tsx
+    layout.tsx
+    globals.css
+  components/
+    TopBar.tsx
+    RecommendationCard.tsx
+    Situation.tsx
+    IrelandMap.tsx
+    Actions.tsx
+    WhyDrawer.tsx
+    ForecastStrip.tsx
+    MiniBarChart.tsx
+    MiniLineChart.tsx
+    StatBlock.tsx
+  lib/
+    api.ts             # Typed fetch helpers for backend endpoints
+    types.ts           # TypeScript interfaces matching Pydantic models
 ```
 
 ---
 
-## `data/scenario.ts` — full content
+## Backend API endpoints
+
+### `GET /api/scenario`
+Returns the full scenario object (see data below). Response schema matches the `Scenario` Pydantic model.
+
+### `POST /api/scenario/approve`
+Request body: `{ "insight_id": "bbq" }`
+Response: `{ "message": "Reallocation scheduled · Prices update Wed 00:00" }`
+
+### `GET /health`
+Returns: `{ "status": "ok" }`
+
+---
+
+## `backend/data.py` — full content
 
 This is the **single source of truth** for all data, copy, and numbers. Use these values exactly. Do not change a number, label, or string.
 
-```ts
-import type { Scenario } from './types';
+```python
+from models import (
+    Scenario, Insight, BbqScenario, CityState, Pin,
+    ForecastDay, CityForecast, LastComparable, Reallocation,
+    Impact, WhyBullet, LineEvidence, BarEvidence, StatEvidence, BarItem,
+)
 
-export const scenario: Scenario = {
-  greeting: 'Good morning, Aoife.',
-  subgreeting: '3 strategic insights this week.',
-  monitoringLabel: 'Joey · monitoring · updated 2 min ago',
+scenario = Scenario(
+    greeting="Good morning, Aoife.",
+    subgreeting="3 strategic insights this week.",
+    monitoring_label="Joey · monitoring · updated 2 min ago",
 
-  insights: [
-    {
-      id: 'bbq',
-      icon: '🔥',
-      title: 'Barbecue weekend',
-      subtitle: 'Dublin / Cork divergence',
-      selected: true,
-      available: true,
-    },
-    {
-      id: 'heatwave',
-      icon: '☀️',
-      title: 'Heatwave forecast',
-      subtitle: 'Ice cream category',
-      selected: false,
-      available: false,
-    },
-    {
-      id: 'sixnations',
-      icon: '🏉',
-      title: 'Six Nations Saturday',
-      subtitle: 'Snacks / beer uplift',
-      selected: false,
-      available: false,
-    },
-  ],
-
-  bbq: {
-    headline: 'Barbecue weekend Sat–Sun',
-    summary:
-      'Dublin will be hot and dry while Cork sees rain. Without action, Dublin stocks out Saturday afternoon and Cork throws away ~180 kg of meat.',
-
-    cities: {
-      dublin: {
-        name: 'Dublin',
-        tempC: 24,
-        condition: 'sunny',
-        emoji: '☀️',
-        currentStockUnits: 1800,
-        currentPriceEur: 12.5,
-        recommendedPriceEur: 13.2,
-        priceDeltaPct: 5.6,
-        lastComparableUnits: 2400,
-        pin: { x: 295, y: 215 },
-      },
-      cork: {
-        name: 'Cork',
-        tempC: 13,
-        condition: 'rain',
-        emoji: '🌧️',
-        currentStockUnits: 1800,
-        currentPriceEur: 12.5,
-        recommendedPriceEur: 11.4,
-        priceDeltaPct: -8.8,
-        lastComparableUnits: 600,
-        pin: { x: 215, y: 395 },
-      },
-    },
-
-    forecast: [
-      { day: 'Fri', dublin: { tempC: 21, emoji: '⛅' }, cork: { tempC: 15, emoji: '🌦️' } },
-      { day: 'Sat', dublin: { tempC: 24, emoji: '☀️' }, cork: { tempC: 13, emoji: '🌧️' } },
-      { day: 'Sun', dublin: { tempC: 25, emoji: '☀️' }, cork: { tempC: 14, emoji: '🌧️' } },
+    insights=[
+        Insight(id="bbq", icon="🔥", title="Barbecue weekend", subtitle="Dublin / Cork divergence", selected=True, available=True),
+        Insight(id="heatwave", icon="☀️", title="Heatwave forecast", subtitle="Ice cream category", selected=False, available=False),
+        Insight(id="sixnations", icon="🏉", title="Six Nations Saturday", subtitle="Snacks / beer uplift", selected=False, available=False),
     ],
 
-    lastComparable: {
-      label: 'Last comparable weekend',
-      date: '2025-06-14',
-      note: 'Dublin sold 2,400 BBQ packs · Cork sold 600. Allocation was even — Dublin stocked out by Saturday 3pm.',
-    },
+    bbq=BbqScenario(
+        headline="Barbecue weekend Sat–Sun",
+        summary="Dublin will be hot and dry while Cork sees rain. Without action, Dublin stocks out Saturday afternoon and Cork throws away ~180 kg of meat.",
 
-    reallocation: {
-      from: 'Cork',
-      to: 'Dublin',
-      units: 400,
-      departs: 'Thu 06:00',
-      arrives: 'Thu 11:30',
-    },
-
-    actions: [
-      'Reallocate 400 BBQ packs Cork → Dublin (truck Thu 06:00)',
-      'Raise Dublin price €12.50 → €13.20 (+5.6%)',
-      'Drop Cork price €12.50 → €11.40 (−8.8%) — early-bird clearance',
-    ],
-
-    impact: {
-      marginEur: 8200,
-      wasteKg: -180,
-      sellThroughPct: 12,
-    },
-
-    why: [
-      {
-        claim: 'Met Éireann forecasts a 11°C delta between Dublin and Cork on Saturday.',
-        source: 'Met Éireann · 87% confidence',
-        evidence: {
-          type: 'line',
-          label: 'Forecast confidence over last 5 runs',
-          points: [82, 84, 85, 86, 87],
+        cities={
+            "dublin": CityState(
+                name="Dublin", temp_c=24, condition="sunny", emoji="☀️",
+                current_stock_units=1800, current_price_eur=12.5,
+                recommended_price_eur=13.2, price_delta_pct=5.6,
+                last_comparable_units=2400, pin=Pin(x=295, y=215),
+            ),
+            "cork": CityState(
+                name="Cork", temp_c=13, condition="rain", emoji="🌧️",
+                current_stock_units=1800, current_price_eur=12.5,
+                recommended_price_eur=11.4, price_delta_pct=-8.8,
+                last_comparable_units=600, pin=Pin(x=215, y=395),
+            ),
         },
-      },
-      {
-        claim: '3 prior BBQ weekends with >10°C Dublin/Cork delta showed ~4× demand skew toward the warmer city.',
-        source: 'Internal sales · 2023–2025',
-        evidence: {
-          type: 'bar',
-          label: 'Dublin units vs Cork units (3 historical weekends)',
-          bars: [
-            { label: '2023-07', dublin: 2100, cork: 580 },
-            { label: '2024-05', dublin: 2350, cork: 620 },
-            { label: '2025-06', dublin: 2400, cork: 600 },
-          ],
-        },
-      },
-      {
-        claim: 'Dublin stocks out Saturday 15:00 at current pace; Cork carries 14 days of cover.',
-        source: 'Inventory snapshot · 06:00 today',
-        evidence: {
-          type: 'stat',
-          label: 'Days of cover at current sell rate',
-          dublin: '1.5',
-          cork: '14',
-        },
-      },
-    ],
-  },
-};
+
+        forecast=[
+            ForecastDay(day="Fri", dublin=CityForecast(temp_c=21, emoji="⛅"), cork=CityForecast(temp_c=15, emoji="🌦️")),
+            ForecastDay(day="Sat", dublin=CityForecast(temp_c=24, emoji="☀️"), cork=CityForecast(temp_c=13, emoji="🌧️")),
+            ForecastDay(day="Sun", dublin=CityForecast(temp_c=25, emoji="☀️"), cork=CityForecast(temp_c=14, emoji="🌧️")),
+        ],
+
+        last_comparable=LastComparable(
+            label="Last comparable weekend",
+            date="2025-06-14",
+            note="Dublin sold 2,400 BBQ packs · Cork sold 600. Allocation was even — Dublin stocked out by Saturday 3pm.",
+        ),
+
+        reallocation=Reallocation(from_city="Cork", to_city="Dublin", units=400, departs="Thu 06:00", arrives="Thu 11:30"),
+
+        actions=[
+            "Reallocate 400 BBQ packs Cork → Dublin (truck Thu 06:00)",
+            "Raise Dublin price €12.50 → €13.20 (+5.6%)",
+            "Drop Cork price €12.50 → €11.40 (−8.8%) — early-bird clearance",
+        ],
+
+        impact=Impact(margin_eur=8200, waste_kg=-180, sell_through_pct=12),
+
+        why=[
+            WhyBullet(
+                claim="Met Éireann forecasts a 11°C delta between Dublin and Cork on Saturday.",
+                source="Met Éireann · 87% confidence",
+                evidence=LineEvidence(type="line", label="Forecast confidence over last 5 runs", points=[82, 84, 85, 86, 87]),
+            ),
+            WhyBullet(
+                claim="3 prior BBQ weekends with >10°C Dublin/Cork delta showed ~4× demand skew toward the warmer city.",
+                source="Internal sales · 2023–2025",
+                evidence=BarEvidence(
+                    type="bar",
+                    label="Dublin units vs Cork units (3 historical weekends)",
+                    bars=[
+                        BarItem(label="2023-07", dublin=2100, cork=580),
+                        BarItem(label="2024-05", dublin=2350, cork=620),
+                        BarItem(label="2025-06", dublin=2400, cork=600),
+                    ],
+                ),
+            ),
+            WhyBullet(
+                claim="Dublin stocks out Saturday 15:00 at current pace; Cork carries 14 days of cover.",
+                source="Inventory snapshot · 06:00 today",
+                evidence=StatEvidence(type="stat", label="Days of cover at current sell rate", dublin="1.5", cork="14"),
+            ),
+        ],
+    ),
+)
 ```
 
 ---
 
-## `data/types.ts` — exact interfaces
+## `backend/models.py` — Pydantic models
+
+```python
+from __future__ import annotations
+from typing import Literal, Union
+from pydantic import BaseModel, Field
+
+
+class Pin(BaseModel):
+    x: int
+    y: int
+
+
+class CityState(BaseModel):
+    name: str
+    temp_c: int
+    condition: str
+    emoji: str
+    current_stock_units: int
+    current_price_eur: float
+    recommended_price_eur: float
+    price_delta_pct: float
+    last_comparable_units: int
+    pin: Pin
+
+
+class CityForecast(BaseModel):
+    temp_c: int
+    emoji: str
+
+
+class ForecastDay(BaseModel):
+    day: str
+    dublin: CityForecast
+    cork: CityForecast
+
+
+class Reallocation(BaseModel):
+    from_city: str = Field(serialization_alias="from")
+    to_city: str = Field(serialization_alias="to")
+    units: int
+    departs: str
+    arrives: str
+
+
+class LastComparable(BaseModel):
+    label: str
+    date: str
+    note: str
+
+
+class Impact(BaseModel):
+    margin_eur: int
+    waste_kg: int
+    sell_through_pct: int
+
+
+class LineEvidence(BaseModel):
+    type: Literal["line"]
+    label: str
+    points: list[int]
+
+
+class BarItem(BaseModel):
+    label: str
+    dublin: int
+    cork: int
+
+
+class BarEvidence(BaseModel):
+    type: Literal["bar"]
+    label: str
+    bars: list[BarItem]
+
+
+class StatEvidence(BaseModel):
+    type: Literal["stat"]
+    label: str
+    dublin: str
+    cork: str
+
+
+WhyEvidence = Union[LineEvidence, BarEvidence, StatEvidence]
+
+
+class WhyBullet(BaseModel):
+    claim: str
+    source: str
+    evidence: WhyEvidence
+
+
+class Insight(BaseModel):
+    id: Literal["bbq", "heatwave", "sixnations"]
+    icon: str
+    title: str
+    subtitle: str
+    selected: bool
+    available: bool
+
+
+class BbqScenario(BaseModel):
+    headline: str
+    summary: str
+    cities: dict[str, CityState]
+    forecast: list[ForecastDay]
+    last_comparable: LastComparable
+    reallocation: Reallocation
+    actions: list[str]
+    impact: Impact
+    why: list[WhyBullet]
+
+
+class Scenario(BaseModel):
+    greeting: str
+    subgreeting: str
+    monitoring_label: str
+    insights: list[Insight]
+    bbq: BbqScenario
+
+
+class ApproveRequest(BaseModel):
+    insight_id: str
+```
+
+---
+
+## `frontend/lib/types.ts` — TypeScript interfaces
+
+These must match the JSON shape returned by the backend (camelCase via Pydantic aliasing or snake_case — pick one and be consistent).
 
 ```ts
 export type City = 'dublin' | 'cork';
@@ -206,21 +318,26 @@ export interface Insight {
 
 export interface CityState {
   name: string;
-  tempC: number;
+  temp_c: number;
   condition: string;
   emoji: string;
-  currentStockUnits: number;
-  currentPriceEur: number;
-  recommendedPriceEur: number;
-  priceDeltaPct: number;
-  lastComparableUnits: number;
+  current_stock_units: number;
+  current_price_eur: number;
+  recommended_price_eur: number;
+  price_delta_pct: number;
+  last_comparable_units: number;
   pin: { x: number; y: number };
+}
+
+export interface CityForecast {
+  temp_c: number;
+  emoji: string;
 }
 
 export interface ForecastDay {
   day: string;
-  dublin: { tempC: number; emoji: string };
-  cork: { tempC: number; emoji: string };
+  dublin: CityForecast;
+  cork: CityForecast;
 }
 
 export interface Reallocation {
@@ -232,9 +349,9 @@ export interface Reallocation {
 }
 
 export interface Impact {
-  marginEur: number;
-  wasteKg: number;
-  sellThroughPct: number;
+  margin_eur: number;
+  waste_kg: number;
+  sell_through_pct: number;
 }
 
 export type WhyEvidence =
@@ -253,7 +370,7 @@ export interface BbqScenario {
   summary: string;
   cities: { dublin: CityState; cork: CityState };
   forecast: ForecastDay[];
-  lastComparable: { label: string; date: string; note: string };
+  last_comparable: { label: string; date: string; note: string };
   reallocation: Reallocation;
   actions: string[];
   impact: Impact;
@@ -263,7 +380,7 @@ export interface BbqScenario {
 export interface Scenario {
   greeting: string;
   subgreeting: string;
-  monitoringLabel: string;
+  monitoring_label: string;
   insights: Insight[];
   bbq: BbqScenario;
 }
@@ -342,12 +459,18 @@ export interface Scenario {
 - Row of 3 pills below; selected pill has filled green background, others have white background with border
 - Clicking a pill calls `onSelect`
 
+### `frontend/lib/api.ts`
+- `fetchScenario(): Promise<Scenario>` — `GET http://localhost:8000/api/scenario`
+- `approveInsight(insightId: string): Promise<{ message: string }>` — `POST http://localhost:8000/api/scenario/approve`
+- Both use typed return values from `lib/types.ts`
+
 ### `app/page.tsx`
 - Client component (`'use client'`)
-- State: `selectedId` (default `'bbq'`), `whyOpen` (default false), `approved` (default false), `toast` (default null)
+- On mount: fetch scenario from backend via `fetchScenario()`; show loading state until resolved
+- State: `selectedId` (default `'bbq'`), `whyOpen` (default false), `approved` (default false), `toast` (default null), `scenario` (from API)
 - Composes `TopBar` → `RecommendationCard` → `WhyDrawer`
 - Renders toast as a fixed bottom-right element when set; auto-dismisses after 3s
-- Approve handler: set `approved=true`, set toast text, fire setTimeout to clear toast
+- Approve handler: call `approveInsight(selectedId)`, set `approved=true`, set toast text from response, fire setTimeout to clear toast
 
 ### `app/layout.tsx`
 - Inter font via `next/font/google`
@@ -368,30 +491,39 @@ export interface Scenario {
 
 ## Do NOT
 
-- Do not add a backend, API routes, `fetch`, or environment variables
+- Do not add a database, ORM, or persistent storage
 - Do not add authentication or user accounts
-- Do not add routing beyond `/`
+- Do not add frontend routing beyond `/`
 - Do not make heatwave or Six Nations pills functional
 - Do not add code comments explaining what code does
-- Do not invent data or copy not present in `scenario.ts`
+- Do not invent data or copy not present in `backend/data.py`
 - Do not add tests
 - Do not add a README beyond what already exists in the repo
 - Do not install chart or map libraries
+- Do not call any external APIs (weather, LLM, etc.)
 
 ---
 
 ## Verification checklist (run before declaring done)
 
-1. `npm run dev` starts with no errors
-2. `npx tsc --noEmit` passes with no errors
-3. Page at `/` shows: greeting, 3 pills (BBQ selected), recommendation card with 3 columns, no console errors
-4. Map renders Ireland-ish outline with 2 pulsing pins (Dublin green, Cork amber), weather emojis, price chips, animated arrow Cork→Dublin with "+400 units" label
-5. Forecast strip shows Fri/Sat/Sun for both cities
-6. Clicking heatwave or Six Nations pill swaps the card to "Preview unavailable"
-7. Clicking the BBQ pill restores the full card
-8. "Show me why" opens the drawer; backdrop click closes it
-9. Drawer bullets are expandable, charts render inline
-10. "Approve" dims the card and shows a toast that auto-dismisses
-11. No TypeScript errors, no console errors, no unused imports
+### Backend
+1. `pip install -r requirements.txt` succeeds
+2. `uvicorn main:app --reload` starts with no errors on port 8000
+3. `GET /health` returns `{"status": "ok"}`
+4. `GET /api/scenario` returns the full scenario JSON with correct data
+5. `POST /api/scenario/approve` with `{"insight_id": "bbq"}` returns the confirmation message
+
+### Frontend
+6. `npm run dev` starts with no errors on port 3000
+7. `npx tsc --noEmit` passes with no errors
+8. Page at `/` loads data from the backend and shows: greeting, 3 pills (BBQ selected), recommendation card with 3 columns, no console errors
+9. Map renders Ireland-ish outline with 2 pulsing pins (Dublin green, Cork amber), weather emojis, price chips, animated arrow Cork→Dublin with "+400 units" label
+10. Forecast strip shows Fri/Sat/Sun for both cities
+11. Clicking heatwave or Six Nations pill swaps the card to "Preview unavailable"
+12. Clicking the BBQ pill restores the full card
+13. "Show me why" opens the drawer; backdrop click closes it
+14. Drawer bullets are expandable, charts render inline
+15. "Approve" calls the backend, dims the card, and shows a toast that auto-dismisses
+16. No TypeScript errors, no console errors, no unused imports
 
 If any item fails, fix it before reporting done.
