@@ -76,6 +76,7 @@ def ireland_map(cities: dict) -> Div:
     var el = document.getElementById('{map_id}');
     if (!el || !window.L) {{ return false; }}
     if (el.dataset.keithInit === '1') {{ return true; }}
+    if (el.offsetParent === null || el.clientWidth === 0) {{ return false; }}
     el.dataset.keithInit = '1';
 
     var dublin = [{DUBLIN_LAT}, {DUBLIN_LON}];
@@ -91,6 +92,8 @@ def ireland_map(cities: dict) -> Div:
       keyboard: false,
       touchZoom: false,
     }});
+    window.__joeyMaps = window.__joeyMaps || [];
+    window.__joeyMaps.push(map);
 
     L.tileLayer('https://{{s}}.basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}{{r}}.png', {{
       attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -194,7 +197,7 @@ def ireland_map(cities: dict) -> Div:
   var tries = 0;
   var t = setInterval(function() {{
     tries++;
-    if (init() || tries > 40) clearInterval(t);
+    if (init() || tries > 100) clearInterval(t);
   }}, 100);
 }})();
 """

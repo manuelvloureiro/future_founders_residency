@@ -99,18 +99,9 @@ def workflow(
         action_states = actions or {0: "pending", 1: "pending", 2: "pending"}
         stages = [
             stage_wrap(signal_strip(scenario, selected_id), None),
-            stage_wrap(
-                situation_panel(bbq),
-                "Reading weather, sales, and inventory feeds…",
-            ),
-            stage_wrap(
-                recommendation_panel(bbq, action_states=action_states),
-                "Simulating reallocation + price changes against guardrails…",
-            ),
-            stage_wrap(
-                decision_bar(approved, action_states=action_states, bbq=bbq),
-                "Preparing plan for your review…",
-            ),
+            stage_wrap(situation_panel(bbq), None),
+            stage_wrap(recommendation_panel(bbq, action_states=action_states), None),
+            stage_wrap(decision_bar(approved, action_states=action_states, bbq=bbq), None),
         ]
     else:
         stages = [
@@ -123,8 +114,47 @@ def workflow(
     else:
         outer_extra = ""
 
+    real_cls = f"joey-workflow-real {workflow_cls}{outer_extra}"
+
+    if fast or insight["id"] != "bbq":
+        return Div(
+            Div(*stages, cls=real_cls),
+            id="workflow",
+            cls="joey-fast" if fast else "",
+        )
+
+    pause_overlay = Div(
+        Div(
+            Div(
+                Div(
+                    Span(cls="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block joey-thinking-dot"),
+                    Span(cls="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block joey-thinking-dot ml-1"),
+                    Span(cls="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block joey-thinking-dot ml-1"),
+                    cls="flex items-center mr-3 shrink-0",
+                ),
+                Div(
+                    Span(
+                        "IDM is thinking",
+                        cls="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold block",
+                    ),
+                    Span(
+                        "Working out reallocation and price changes against guardrails…",
+                        cls="text-sm text-slate-700 font-medium block",
+                    ),
+                ),
+                cls="flex items-center",
+            ),
+            Div(cls="joey-skeleton h-3 mt-4 w-2/3"),
+            Div(cls="joey-skeleton h-3 mt-2 w-1/2"),
+            Div(cls="joey-skeleton h-3 mt-2 w-3/4"),
+            cls="bg-white rounded-xl border border-emerald-200 shadow-sm p-6",
+        ),
+        cls="joey-workflow-pause",
+    )
+
     return Div(
-        *stages,
-        cls=f"{workflow_cls}{outer_extra}",
+        Div(*stages, cls=real_cls),
+        pause_overlay,
         id="workflow",
+        cls="joey-workflow-wrap",
     )

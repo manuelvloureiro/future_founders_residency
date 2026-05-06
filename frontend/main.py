@@ -110,22 +110,20 @@ HEAD_STYLES = """
 
 .joey-stage-wrap { position: relative; }
 .joey-stage-real { opacity: 0; animation: joey-stage-in-kf 0.5s ease-out forwards; }
-.joey-stage-thinking { position: absolute; inset: 0; animation: joey-fade-out-kf 0.4s ease-out forwards; pointer-events: none; }
+.joey-stage-thinking { position: absolute; inset: 0; animation: joey-fade-out-kf 0.4s ease-out forwards; pointer-events: none; display: none; }
 
-#workflow > .joey-stage-wrap:nth-child(1) > .joey-stage-real { animation-delay: 0s; }
-#workflow > .joey-stage-wrap:nth-child(1) > .joey-stage-thinking { display: none; }
-
-#workflow > .joey-stage-wrap:nth-child(2) > .joey-stage-real { animation-delay: 1.4s; }
-#workflow > .joey-stage-wrap:nth-child(2) > .joey-stage-thinking { animation-delay: 1.4s; }
-
-#workflow > .joey-stage-wrap:nth-child(3) > .joey-stage-real { animation-delay: 2.8s; }
-#workflow > .joey-stage-wrap:nth-child(3) > .joey-stage-thinking { animation-delay: 2.8s; }
-
-#workflow > .joey-stage-wrap:nth-child(4) > .joey-stage-real { animation-delay: 4.0s; }
-#workflow > .joey-stage-wrap:nth-child(4) > .joey-stage-thinking { animation-delay: 4.0s; }
+.joey-workflow-wrap { position: relative; }
+.joey-workflow-wrap > .joey-workflow-real { display: none; }
+.joey-workflow-wrap.joey-pause-done > .joey-workflow-real { display: block; }
+.joey-workflow-pause {
+  z-index: 5;
+  animation: joey-fade-out-kf 0.4s ease-out 2.5s forwards;
+  pointer-events: none;
+}
+.joey-workflow-wrap.joey-pause-done > .joey-workflow-pause { display: none; }
 
 #workflow.joey-fast .joey-stage-real { animation-delay: 0s !important; }
-#workflow.joey-fast .joey-stage-thinking { display: none !important; }
+#workflow.joey-fast .joey-workflow-pause { display: none !important; }
 
 @keyframes joey-toast-in-kf {
   from { opacity: 0; transform: translateY(20px); }
@@ -253,6 +251,30 @@ document.body.addEventListener('htmx:afterSwap', (e) => {
 });
 """
 
+WORKFLOW_PAUSE_SCRIPT = """
+function joeyArmWorkflowPause() {
+  const wf = document.getElementById('workflow');
+  if (!wf) return;
+  if (wf.classList.contains('joey-fast') || !wf.classList.contains('joey-workflow-wrap')) return;
+  if (wf.dataset.joeyPauseArmed === '1') return;
+  wf.dataset.joeyPauseArmed = '1';
+  setTimeout(() => {
+    wf.classList.add('joey-pause-done');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+      (window.__joeyMaps || []).forEach((m) => { try { m.invalidateSize(); } catch (e) {} });
+    });
+  }, 2500);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', joeyArmWorkflowPause);
+} else {
+  joeyArmWorkflowPause();
+}
+document.addEventListener('htmx:afterSwap', () => joeyArmWorkflowPause());
+"""
+
 
 app, rt = fast_app(
     pico=False,
@@ -277,6 +299,7 @@ app, rt = fast_app(
         Style("html { font-size: 120%; } html, body { font-family: 'Inter', sans-serif; }"),
         Style(HEAD_STYLES),
         Script(DISMISS_TOAST_SCRIPT),
+        Script(WORKFLOW_PAUSE_SCRIPT),
     ),
 )
 
