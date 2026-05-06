@@ -102,7 +102,51 @@ def action_row(
     )
 
 
-def projected_impact_strip(impact: dict, confidence: int = 87) -> Div:
+_IMPACT_WEIGHTS = {
+    # idx -> (margin_share, waste_share, sell_through_share)
+    0: (0.50, 0.60, 0.70),  # Reallocate 400 packs Cork → Dublin
+    1: (0.40, 0.00, 0.30),  # Raise Dublin price +5.6%
+    2: (0.10, 0.40, 0.00),  # Drop Cork price −8.8% (clearance)
+}
+
+
+def _is_active(decision: str) -> bool:
+    return decision == "approved"
+
+
+def compute_scaled_impact(impact: dict, action_states: dict | None) -> dict:
+    states = action_states or {}
+    margin = waste = sell = 0.0
+    for idx, (mw, ww, sw) in _IMPACT_WEIGHTS.items():
+        if _is_active(states.get(idx, "pending")):
+            margin += mw
+            waste += ww
+            sell += sw
+    return {
+        "margin_eur": int(round(impact["margin_eur"] * margin)),
+        "waste_kg": int(round(impact["waste_kg"] * waste)),
+        "sell_through_pct": int(round(impact["sell_through_pct"] * sell)),
+    }
+
+
+def projected_impact_strip(
+    impact: dict,
+    confidence: int = 87,
+    action_states: dict | None = None,
+) -> Div:
+    scaled = compute_scaled_impact(impact, action_states)
+    margin = scaled["margin_eur"]
+    waste = scaled["waste_kg"]
+    sell = scaled["sell_through_pct"]
+
+    margin_str = f"+€{margin:,}" if margin else "€0"
+    waste_str = f"{waste} kg" if waste else "0 kg"
+    sell_str = f"+{sell}%" if sell else "0%"
+
+    margin_tone = "text-emerald-600" if margin else "text-slate-400"
+    waste_tone = "text-emerald-600" if waste else "text-slate-400"
+    sell_tone = "text-sky-600" if sell else "text-slate-400"
+
     return Div(
         Div(
             Span(
@@ -117,19 +161,19 @@ def projected_impact_strip(impact: dict, confidence: int = 87) -> Div:
         ),
         Div(
             Div(
-                Span(f"+€{impact['margin_eur']:,}", cls="text-lg font-bold text-emerald-600 block leading-tight"),
+                Span(margin_str, cls=f"text-lg font-bold {margin_tone} block leading-tight"),
                 Span("Margin uplift", cls="text-[10px] text-slate-500 block"),
                 cls="flex flex-col",
             ),
             Div(cls="w-px bg-emerald-200/60 self-stretch mx-3"),
             Div(
-                Span(f"{impact['waste_kg']} kg", cls="text-lg font-bold text-emerald-600 block leading-tight"),
+                Span(waste_str, cls=f"text-lg font-bold {waste_tone} block leading-tight"),
                 Span("Waste avoided", cls="text-[10px] text-slate-500 block"),
                 cls="flex flex-col",
             ),
             Div(cls="w-px bg-emerald-200/60 self-stretch mx-3"),
             Div(
-                Span(f"+{impact['sell_through_pct']}%", cls="text-lg font-bold text-sky-600 block leading-tight"),
+                Span(sell_str, cls=f"text-lg font-bold {sell_tone} block leading-tight"),
                 Span("Sell-through", cls="text-[10px] text-slate-500 block"),
                 cls="flex flex-col",
             ),
@@ -143,6 +187,7 @@ def recommendation_panel(
     bbq: dict,
     on_show_why_target: str = "#why-drawer",
     action_states: dict | None = None,
+    approved: bool = False,
 ) -> Div:
     impact = bbq["impact"]
     realloc = bbq["reallocation"]
@@ -153,6 +198,8 @@ def recommendation_panel(
         (TAG_ICON, bbq["actions"][1], "+5.6%", "emerald"),
         (TAGDOWN_ICON, bbq["actions"][2], "−8.8%", "amber"),
     ]
+
+    from .decision_bar import decision_footer
 
     map_column = Div(
         Div(
@@ -184,7 +231,7 @@ def recommendation_panel(
         stage_header(
             "03",
             "Recommendation",
-            "IDM's proposed plan",
+            "IDM's proposed plan · review and decide",
             status="3 actions",
             status_tone="sky",
         ),
@@ -270,4 +317,5 @@ def recommendation_panel(
             map_column,
             cls="grid grid-cols-1 lg:grid-cols-2 gap-6",
         ),
+        decision_footer(approved, action_states, bbq),
     )

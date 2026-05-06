@@ -1,6 +1,5 @@
 from fasthtml.common import Div, P, Span
 
-from .decision_bar import decision_bar
 from .recommendation_panel import recommendation_panel
 from .signal_strip import signal_strip
 from .situation_panel import situation_panel
@@ -100,8 +99,10 @@ def workflow(
         stages = [
             stage_wrap(signal_strip(scenario, selected_id), None),
             stage_wrap(situation_panel(bbq), None),
-            stage_wrap(recommendation_panel(bbq, action_states=action_states), None),
-            stage_wrap(decision_bar(approved, action_states=action_states, bbq=bbq), None),
+            stage_wrap(
+                recommendation_panel(bbq, action_states=action_states, approved=approved),
+                None,
+            ),
         ]
     else:
         stages = [

@@ -11,7 +11,7 @@ from components.why_drawer import why_drawer_closed, why_drawer_open
 state = {
     "selected_id": "bbq",
     "approved": False,
-    "actions": {0: "approved", 1: "pending", 2: "escalated"},
+    "actions": {0: "pending", 1: "pending", 2: "pending"},
     "scenario": None,
     "scenario_lock": asyncio.Lock(),
     "toast": None,
