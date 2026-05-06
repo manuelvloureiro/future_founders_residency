@@ -1,10 +1,11 @@
-from fasthtml.common import Div, NotStr, Span
+from fasthtml.common import Button, Div, NotStr, Span
 
 from .forecast_strip import forecast_strip
 from .stage import stage_card, stage_header
 
 
 CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+ARROW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
 
 
 def why_now_timeline() -> Div:
@@ -210,6 +211,14 @@ def situation_panel(bbq: dict) -> Div:
                         cls="flex gap-2",
                     ),
                     cls="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-lg p-3 mt-4",
+                ),
+                Button(
+                    Span("Show me why", cls="mr-1.5"),
+                    Div(NotStr(ARROW_ICON), cls="w-3.5 h-3.5"),
+                    cls="w-full mt-4 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors flex items-center justify-center",
+                    hx_get="/why",
+                    hx_target="#why-drawer",
+                    hx_swap="outerHTML",
                 ),
                 cls="w-full",
             ),

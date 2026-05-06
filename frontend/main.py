@@ -1,6 +1,6 @@
 import asyncio
 
-from fasthtml.common import Div, Link, Main, Script, Span, Style, fast_app, serve
+from fasthtml.common import Button, Div, Link, Main, NotStr, Script, Span, Style, fast_app, serve
 
 from api import approve_insight, fetch_scenario
 from components.app_topbar import app_topbar
@@ -305,22 +305,7 @@ app, rt = fast_app(
 
 
 def toast_node() -> Div:
-    if state["toast"]:
-        return Div(
-            Div(
-                Div(
-                    Span("✓", cls="text-emerald-400 text-lg font-bold"),
-                    cls="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0",
-                ),
-                Div(
-                    Span("Plan approved", cls="text-sm font-semibold text-white block"),
-                    Span(state["toast"], cls="text-xs text-slate-300 block"),
-                ),
-                cls="flex items-center gap-3 bg-slate-900 px-4 py-3 rounded-xl shadow-2xl border border-slate-700 min-w-[320px]",
-            ),
-            cls="fixed bottom-6 right-6 z-50",
-            id="toast",
-        )
+    state["toast"] = None
     return Div(id="toast")
 
 
@@ -368,6 +353,7 @@ async def index(fast: int | None = None):
             ),
             why_drawer_closed(),
             toast_node(),
+            Div(id="summary-modal"),
             cls="ml-52 min-h-screen",
         ),
         cls="bg-slate-50 min-h-screen",
@@ -388,8 +374,6 @@ async def action(idx: int, decision: str):
     scenario = await get_scenario()
     if decision in {"approved", "escalated", "rejected", "pending"} and idx in state["actions"]:
         state["actions"][idx] = decision
-    if all(v == "approved" for v in state["actions"].values()):
-        state["approved"] = True
     return workflow(scenario, state["selected_id"], state["approved"], fast=True, actions=state["actions"])
 
 
@@ -436,6 +420,158 @@ async def why(expand: int | None = None):
 @rt("/why/close")
 async def why_close():
     return why_drawer_closed()
+
+
+_DECISION_META = {
+    "approved": ("Approve", "✓", "bg-emerald-50 text-emerald-700 border-emerald-200"),
+    "escalated": ("Escalate", "↑", "bg-amber-50 text-amber-700 border-amber-200"),
+    "rejected": ("Reject", "✕", "bg-rose-50 text-rose-700 border-rose-200"),
+    "pending": ("Pending", "○", "bg-slate-50 text-slate-500 border-slate-200"),
+}
+
+
+def _summary_row(idx: int, label: str, decision: str) -> Div:
+    name, glyph, badge_cls = _DECISION_META[decision]
+    is_dropped = decision == "rejected"
+    text_cls = "text-sm text-slate-400 line-through" if is_dropped else "text-sm text-slate-700"
+    return Div(
+        Span(
+            str(idx),
+            cls="w-5 h-5 rounded-full bg-slate-900 text-white text-[10px] font-semibold flex items-center justify-center shrink-0",
+        ),
+        Span(label, cls=f"{text_cls} flex-1"),
+        Span(
+            f"{glyph} {name}",
+            cls=f"text-[10px] font-semibold px-2 py-0.5 rounded border {badge_cls} shrink-0",
+        ),
+        cls="flex items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-lg",
+    )
+
+
+def summary_modal(scenario: dict) -> Div:
+    from components.recommendation_panel import projected_impact_strip
+
+    bbq = scenario["bbq"]
+    actions = bbq["actions"]
+    states = state["actions"]
+
+    counts = {
+        "approved": sum(1 for v in states.values() if v == "approved"),
+        "escalated": sum(1 for v in states.values() if v == "escalated"),
+        "rejected": sum(1 for v in states.values() if v == "rejected"),
+    }
+    will_execute = counts["approved"]
+    will_escalate = counts["escalated"]
+    will_drop = counts["rejected"]
+
+    headline_parts = []
+    if will_execute:
+        headline_parts.append(f"IDM will execute {will_execute} action{'s' if will_execute != 1 else ''}")
+    if will_escalate:
+        headline_parts.append(f"escalate {will_escalate} for review")
+    if will_drop:
+        headline_parts.append(f"drop {will_drop}")
+    headline = ", ".join(headline_parts) + "." if headline_parts else "No actions selected."
+
+    rows = [
+        _summary_row(i + 1, actions[i], states.get(i, "pending"))
+        for i in range(len(actions))
+    ]
+
+    cancel_btn = Button(
+        "Cancel",
+        cls="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors",
+        hx_get="/summary/close",
+        hx_target="#summary-modal",
+        hx_swap="outerHTML",
+    )
+    confirm_btn = Button(
+        "Confirm and execute",
+        cls="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-700 hover:border-emerald-700 transition-colors",
+        hx_post="/summary/confirm",
+        hx_target="#summary-modal",
+        hx_swap="outerHTML",
+    )
+
+    return Div(
+        Div(
+            Div(
+                Div(
+                    Span(
+                        "Confirm decisions",
+                        cls="text-base font-semibold text-slate-900",
+                    ),
+                    Span(
+                        headline,
+                        cls="text-sm text-slate-500 block mt-0.5",
+                    ),
+                    cls="flex flex-col",
+                ),
+                Button(
+                    "✕",
+                    cls="text-slate-400 hover:text-slate-700 text-lg leading-none w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 transition-colors",
+                    hx_get="/summary/close",
+                    hx_target="#summary-modal",
+                    hx_swap="outerHTML",
+                ),
+                cls="flex items-start justify-between mb-4",
+            ),
+            Div(*rows, cls="flex flex-col gap-2"),
+            Div(
+                projected_impact_strip(bbq["impact"], action_states=states),
+                cls="mt-4",
+            ),
+            Div(
+                cancel_btn,
+                confirm_btn,
+                cls="flex items-center justify-end gap-2 mt-5",
+            ),
+            cls="bg-white rounded-xl border border-slate-200 shadow-2xl p-6 w-full max-w-lg",
+        ),
+        cls="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm",
+        id="summary-modal",
+    )
+
+
+@rt("/summary")
+async def summary():
+    scenario = await get_scenario()
+    return summary_modal(scenario)
+
+
+@rt("/summary/close")
+async def summary_close():
+    return Div(id="summary-modal")
+
+
+@rt("/summary/confirm", methods=["POST"])
+async def summary_confirm():
+    scenario = await get_scenario()
+    res = await approve_insight(state["selected_id"])
+    state["approved"] = True
+    state["toast"] = res["message"]
+    flow = workflow(scenario, state["selected_id"], state["approved"], fast=True, actions=state["actions"])
+    flow.attrs["hx-swap-oob"] = "true"
+    return (
+        Div(id="summary-modal"),
+        flow,
+        Div(
+            Div(
+                Div(
+                    Span("✓", cls="text-emerald-400 text-lg font-bold"),
+                    cls="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0",
+                ),
+                Div(
+                    Span("Plan approved", cls="text-sm font-semibold text-white block"),
+                    Span(res["message"], cls="text-xs text-slate-300 block"),
+                ),
+                cls="flex items-center gap-3 bg-slate-900 px-4 py-3 rounded-xl shadow-2xl border border-slate-700 min-w-[320px]",
+            ),
+            cls="fixed bottom-6 right-6 z-50",
+            id="toast",
+            hx_swap_oob="true",
+        ),
+    )
 
 
 if __name__ == "__main__":

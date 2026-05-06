@@ -1,6 +1,9 @@
-from fasthtml.common import Div, Span
+from fasthtml.common import Button, Div, NotStr, Span
 
 from .recommendation_panel import projected_impact_strip
+
+
+ARROW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
 
 
 _TONE_PILL = {
@@ -52,6 +55,36 @@ def decision_footer(approved: bool, action_states: dict | None, bbq: dict | None
         projected_impact_strip(bbq["impact"], action_states=action_states) if bbq else Div()
     )
 
+    has_actionable = counts["approved"] + counts["escalated"] > 0
+    if approved:
+        proceed_label = "Approved"
+        proceed_cls = "bg-emerald-600 text-white border-emerald-600 cursor-default opacity-90"
+        proceed_disabled = True
+    elif has_actionable:
+        proceed_label = "Proceed"
+        proceed_cls = "bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 hover:border-emerald-700"
+        proceed_disabled = False
+    else:
+        proceed_label = "Proceed"
+        proceed_cls = "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+        proceed_disabled = True
+
+    proceed_btn_kwargs = {
+        "cls": f"inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg border transition-colors {proceed_cls}",
+    }
+    if not proceed_disabled:
+        proceed_btn_kwargs["hx_get"] = "/summary"
+        proceed_btn_kwargs["hx_target"] = "#summary-modal"
+        proceed_btn_kwargs["hx_swap"] = "outerHTML"
+    else:
+        proceed_btn_kwargs["disabled"] = True
+
+    proceed_btn = Button(
+        Span(proceed_label),
+        Div(NotStr(ARROW_ICON), cls="w-3.5 h-3.5"),
+        **proceed_btn_kwargs,
+    )
+
     return Div(
         Div(
             Div(
@@ -64,5 +97,6 @@ def decision_footer(approved: bool, action_states: dict | None, bbq: dict | None
         ),
         Span(body_text, cls="text-xs text-slate-500 block mt-1"),
         Div(impact_block, cls="mt-3"),
+        Div(proceed_btn, cls="flex justify-end mt-3"),
         cls="mt-4 pt-4 border-t border-slate-100",
     )

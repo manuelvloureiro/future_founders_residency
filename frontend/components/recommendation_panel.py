@@ -8,7 +8,6 @@ LOCATION_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 
 
 CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-ARROW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
 TRUCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1"/><path d="M15 9h4l3 4v4h-7z"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>'
 TAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 0 0-2-2h-7l-9 9 7 7 9-9z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>'
 TAGDOWN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8a2 2 0 0 0-2-2h-7l-9 9 7 7 9-9z"/><path d="M7.5 7.5l0 0"/><path d="M11 14l4 0M13 12l0 4"/></svg>'
@@ -185,7 +184,6 @@ def projected_impact_strip(
 
 def recommendation_panel(
     bbq: dict,
-    on_show_why_target: str = "#why-drawer",
     action_states: dict | None = None,
     approved: bool = False,
 ) -> Div:
@@ -302,14 +300,6 @@ def recommendation_panel(
                         cls="flex items-center mt-1",
                     ),
                     cls="bg-slate-50 border border-slate-100 rounded-lg p-3",
-                ),
-                Button(
-                    Span("Show me why", cls="mr-1.5"),
-                    Div(NotStr(ARROW_ICON), cls="w-3.5 h-3.5"),
-                    cls="w-full mt-3 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors flex items-center justify-center",
-                    hx_get="/why",
-                    hx_target=on_show_why_target,
-                    hx_swap="outerHTML",
                 ),
             ),
             cls="flex flex-col gap-3",
